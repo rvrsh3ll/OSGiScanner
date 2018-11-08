@@ -8,6 +8,7 @@ Once a Tester has gained access to an OSGi console, they may be able to execute 
 
 I've previously documented both attack types:
 [Leveraging Adobe Live Cycle](https://medium.com/rvrsh3ll/leveraging-adobe-livecycle-202ce6772461)
+
 [Shelling Apache Felix With Java Bundles](https://posts.specterops.io/shelling-apache-felix-with-java-bundles-2450d3a099a)
 
 To find OSGi consoles, we simply search for the "/system/console" directory. The web request typically requires Basic auth and we can use the fingerprint 'WWW-Authenticate: Basic realm="OSGi Management Console"' to detect such a console.
