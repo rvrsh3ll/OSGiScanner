@@ -7,6 +7,7 @@ OSGi consoles commonly have the default username and password combination of adm
 Once a Tester has gained access to an OSGi console, they may be able to execute groovy script via the script console or deploy malicous bundle packages.
 
 I've previously documented both attack types:
+
 [Leveraging Adobe Live Cycle](https://medium.com/rvrsh3ll/leveraging-adobe-livecycle-202ce6772461)
 
 [Shelling Apache Felix With Java Bundles](https://posts.specterops.io/shelling-apache-felix-with-java-bundles-2450d3a099a)
