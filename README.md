@@ -20,7 +20,7 @@ On [Shodan](https://shodan.io), you can may find these consoles inside your targ
 Next, execute OSGi scanner against that host or range of hosts to discover more potential targets.
 
 #### Example usage
-python OSGiScanner.py --cidr 10.10.1.0/24 --port 80 --oufile myscan.log
+python OSGiScanner.py --cidr 10.10.1.0/24 --port 80 --outfile myscan.log
 ##### OR an example using SSL
 python OSGiScanner.py --cidr 10.10.1.0/24 --port 443
 ##### OR an example using SSL on different port
