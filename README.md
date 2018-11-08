@@ -24,5 +24,5 @@ python OSGiScanner.py --cidr 10.10.1.0/24 --port 80 --oufile myscan.log
 ##### OR an example using SSL
 python OSGiScanner.py --cidr 10.10.1.0/24 --port 443
 ##### OR an example using SSL on different port
-python OSGiScanner.py --cidr 10.10.1.0/24 --port 443 --ssl
+python OSGiScanner.py --cidr 10.10.1.0/24 --port 9443 --ssl
 
