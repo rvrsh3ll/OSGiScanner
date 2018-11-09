@@ -54,6 +54,7 @@ class ScanIP(threading.Thread):
                             logger.info("[!] Found OSGi Console at " + target)
                 else:
                     pass
+            self.queue.task_done()
 def Main():
     # Script argument parsing
     parser = argparse.ArgumentParser(description='A script to identify OSGi Consoles')
@@ -73,7 +74,7 @@ def Main():
             protocol = "s"
         else:
             protocol = ""
-            
+
     # Set the queue
     queue = Queue.Queue()
 
