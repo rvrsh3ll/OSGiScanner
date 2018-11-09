@@ -28,7 +28,6 @@ def scan_ip(ip, port, secure):
         req = urllib2.Request(target)
         req.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows NT 6.3; Win64; x64; Trident/7.0; rv:11.0) like Geckos')]
         handle = urllib2.urlopen(req, context=ctx, timeout=4)
-        return true
     except (IOError, httplib.BadStatusLine) as e:
         if hasattr(e, 'code'):
             if e.code != 401:
