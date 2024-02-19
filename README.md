@@ -29,4 +29,4 @@ python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 443
 ##### Example using SSL on different port
 python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 9443 --ssl
 ##### Example using a host list
-python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 8080 --verbose
+python3 OSGiScanner.py --hosts hostlist.txt --port 8080 --verbose
