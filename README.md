@@ -1,6 +1,6 @@
 # OSGiScanner
 
-OSGiScanner is a simple Python 2.7 tool written to aid Penetration Testers in finding OSGi consoles.
+OSGiScanner is a simple Python3 tool written to aid Penetration Testers in finding OSGi consoles.
 
 OSGi consoles commonly have the default username and password combination of admin:admin.
 
@@ -20,9 +20,13 @@ On [Shodan](https://shodan.io), you can may find these consoles inside your targ
 Next, execute OSGi scanner against that host or range of hosts to discover more potential targets.
 
 #### Example usage
-python OSGiScanner.py --cidr 10.10.1.0/24 --port 80 --outfile myscan.log
-##### OR an example using SSL
-python OSGiScanner.py --cidr 10.10.1.0/24 --port 443
-##### OR an example using SSL on different port
-python OSGiScanner.py --cidr 10.10.1.0/24 --port 9443 --ssl
-
+##### Setup
+python3 -m pip install -r requirements
+##### Example using cidr and a custom outfile
+python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 80 --outfile myscan.log
+##### Example using SSL
+python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 443
+##### Example using SSL on different port
+python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 9443 --ssl
+##### Example using a host list
+python3 OSGiScanner.py --cidr 10.10.1.0/24 --port 8080 --verbose

@@ -1,92 +1,98 @@
-import urllib2
-import ssl
+#!/usr/bin/python3
+import requests
+from urllib3.exceptions import InsecureRequestWarning
 import ipcalc
 import argparse
 import logging
-import Queue
 import threading
-import httplib
-
+import http.client
+import sys
 
 class ScanIP(threading.Thread):
-    def __init__(self, queue, outfile):
+    def __init__(self, target, username, password, outfile, verbose):
         threading.Thread.__init__(self)
-        self.queue = queue
+        self.target = target
+        self.username = username
+        self.password = password
         self.outfile = outfile
-        while True:
+        self.verbose = verbose
 
-            # Define loggin stuff
-            logger = logging.getLogger()
-            logger.setLevel(logging.INFO)
-            # create a file handler
-            handler = logging.FileHandler(outfile)
-            handler.setLevel(logging.INFO)
-            # add the handlers to the logger
-            logger.addHandler(handler)
-            # create a logging format
-            formatter = logging.Formatter('%(asctime)s - %(message)s')
-            handler.setFormatter(formatter)
-            if self.queue.empty():
-                break
+    def run(self):
+        # Set Logging
+        # Define logging stuff
+        logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        handlers=[logging.FileHandler(self.outfile), logging.StreamHandler(sys.stdout)],
+        )
+        # Handle SSL/TLS Errors
+        requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-            # Bypass errors for bad SSL certs
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-
-            # Read next target from the queue
-            target = self.queue.get()
-
-            # Begin the search
-            try:
-                print "[*] Trying " + target
-                req = urllib2.Request(target)
-                req.addheaders = [('User-Agent', 'Mozilla/5.0 (Windows NT 6.3; Win64; x64; Trident/7.0; rv:11.0) like Geckos')]
-                handle = urllib2.urlopen(req, timeout=4, context=ctx)
-            except (IOError, httplib.BadStatusLine) as e:
-                if hasattr(e, 'code'):
-                    if e.code != 401:
-                        pass
-                    else:
-                        if ("OSGi" in e.headers['www-authenticate']):
-                            print "[!] Found OSGi Console at " + target
-                            logger.info("[!] Found OSGi Console at " + target)
-                else:
+        # Begin the search
+        try:
+            if self.verbose:
+                logging.info("[*] Trying " + self.target)
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64; Trident/7.0; rv:11.0) like Geckos'}
+            response = requests.get(self.target, headers=headers, timeout=4, verify=False)
+            response.raise_for_status()
+        except (requests.exceptions.RequestException, http.client.BadStatusLine) as e:
+            if hasattr(e.response, 'status_code'):
+                if e.response.status_code != 401:
                     pass
-            self.queue.task_done()
+                else:
+                    # Check the basic auth header for OSGi
+                    if ("OSGi" in e.response.headers['www-authenticate']):
+                        logging.info("[!] Found OSGi Console at " + self.target)
+                        # Attempt auth if a username is provided
+                        if self.username:
+                            try:
+                                response = requests.get(self.target, headers=headers, auth=(self.username, self.password), timeout=4, verify=False)
+                                response.raise_for_status()
+                                if response.status_code == 200:
+                                    logging.info("[+] Successful login to OSGi Console at " + self.target)
+                            except (requests.exceptions.RequestException, http.client.BadStatusLine) as e:
+                                pass
+                        else:
+                            pass
 def Main():
     # Script argument parsing
     parser = argparse.ArgumentParser(description='A script to identify OSGi Consoles')
-    parser.add_argument('--cidr', type=str, metavar='CIDR', nargs=1, help='CIDR notation i.e 192.168.1.10/24', required=True)
+    parser.add_argument('--cidr', type=str, metavar='CIDR', nargs=1, help='CIDR notation i.e 192.168.1.10/24', required=False)
+    parser.add_argument('--hosts', type=str, help="Hostname List", required=False)
     parser.add_argument('--port', type=int, help='Port number', required=True)
+    parser.add_argument('--ssl', action='store_true',required=False)
+    parser.add_argument('--username', type=str, help='Username for authentication', required=False)
+    parser.add_argument('--password', type=str, help='Password for authentication', required=False)
     parser.add_argument('--threads', type=int, default=10, help='Number of Threads', required=False)
-    parser.add_argument('--ssl', action='store_true', default=False, help='Enable SSL', required=False)
     parser.add_argument('--outfile', action='store', default='osgi_scanner.log', help='Log results to this file')
+    parser.add_argument('--verbose', help="Be verbose", action="store_true")
     args = parser.parse_args()
-    
-    # URI to the console. Default location.
-    uri = '/system/console'
-    if args.port == 443:
-        protocol = "s"
-    else:
-        if args.ssl:
-            protocol = "s"
-        else:
-            protocol = ""
+    # Common OSGi Paths
+    uris = ["/","/system","/console/","/system/console"]
+    protocol = "s" if args.ssl == True else ""
+    targets = []
+    if args.cidr:
+        for ip in ipcalc.Network(args.cidr[0]):
+            for uri in uris:
+                target = f"http{protocol}://{ip}:{args.port}{uri}"
+                targets.append(target)
+    elif args.hosts:
+        with open(args.hosts,'r') as hostfile:
+            hosts = hostfile.readlines()
+        for host in hosts:
+            for uri in uris:
+                target = f"http{protocol}://{host}:{args.port}{uri}"
+                targets.append(target)
+    threads = []
+    for target in targets:
+        t = ScanIP(target, args.username, args.password, args.outfile,args.verbose)
+        threads.append(t)
 
-    # Set the queue
-    queue = Queue.Queue()
-
-    for ip in ipcalc.Network(args.cidr[0]):
-        target = "http" + str(protocol) + "://" + str(ip) + ":" + str(args.port) + str(uri)
-        queue.put(target)
-
-    threads = args.threads
-    for i in range(threads):
-        t = ScanIP(queue, args.outfile)
-        t.setDaemon(False)
+    for t in threads:
         t.start()
-    queue.join()
+
+    for t in threads:
+        t.join()
 
 if __name__ == "__main__":
     Main()
